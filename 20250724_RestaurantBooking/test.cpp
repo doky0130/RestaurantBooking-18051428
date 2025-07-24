@@ -1,6 +1,5 @@
 #include "gmock/gmock.h"
 #include "booking_scheduler.cpp"
-#include "test_day_of_week_booking_scheduler.cpp"
 
 using namespace testing;
 
@@ -19,6 +18,12 @@ public:
 	MOCK_METHOD(void, sendMail, (Schedule*), (override));
 };
 
+class MockBookingScheduler : public BookingScheduler {
+public:
+	MockBookingScheduler(int capacityPerHour) : BookingScheduler{ capacityPerHour } {}
+	MOCK_METHOD(time_t, getNow, (), (override));
+};
+
 class BookingSchedulerTest : public Test {
 public:
 	MockCustomer CUSTOMER;
@@ -31,12 +36,15 @@ public:
 	BookingScheduler bookingScheduler{ CAPACITY_PER_HOUR };
 	NiceMock<MockSmsSender> smsSender;
 	NiceMock <MockMailSender> mailSender;
+	MockBookingScheduler mockScheduler{ CAPACITY_PER_HOUR };
+	tm SUNDAY_DATE = getTime(2025, 7, 20, 13, 0);
+	tm MONDAY_DATE = getTime(2025, 7, 21, 13, 0);
 
 	void setUp() {
 		EXPECT_CALL(CUSTOMER, getEmail)
-			.WillRepeatedly(testing::Return(""));
+			.WillRepeatedly(Return(""));
 		EXPECT_CALL(CUSTOMER_WITH_MAIL, getEmail)
-			.WillRepeatedly(testing::Return("mail@mail.com"));
+			.WillRepeatedly(Return("mail@mail.com"));
 
 		NOT_ON_THE_HOUR = getTime(2025, 7, 24, 12, 56);
 		ON_THE_HOUR = getTime(2025, 7, 24, 13, 0);
@@ -136,12 +144,13 @@ TEST_F(BookingSchedulerTest, 이메일이있는경우에는이메일발송) {
 TEST_F(BookingSchedulerTest, 현재날짜가일요일인경우예약불가예외처리) {
 	setUp();
 
-	tm sundayDate = getTime(2025, 7, 20, 13, 0);
-	TestBookingScheduler sunday{ CAPACITY_PER_HOUR, sundayDate };
+	MockBookingScheduler mockScheduler{ CAPACITY_PER_HOUR };
+	EXPECT_CALL(mockScheduler, getNow)
+		.WillRepeatedly(Return(mktime(&SUNDAY_DATE)));
 
 	try {
 		schedule = new Schedule{ ON_THE_HOUR , UNDER_CAPACITY, CUSTOMER };
-		sunday.addSchedule(schedule);
+		mockScheduler.addSchedule(schedule);
 		FAIL();
 	}
 	catch (std::exception& e) {
@@ -152,13 +161,13 @@ TEST_F(BookingSchedulerTest, 현재날짜가일요일인경우예약불가예외처리) {
 TEST_F(BookingSchedulerTest, 현재날짜가일요일이아닌경우예약가능) {
 	setUp();
 
-	tm mondayDate = getTime(2025, 7, 21, 13, 0);
-	TestBookingScheduler monday{ CAPACITY_PER_HOUR, mondayDate };
+	EXPECT_CALL(mockScheduler, getNow)
+		.WillRepeatedly(Return(mktime(&MONDAY_DATE)));
 
 	Schedule* schedule = new Schedule{ ON_THE_HOUR , CAPACITY_PER_HOUR, CUSTOMER };
 
-	monday.addSchedule(schedule);
-	EXPECT_EQ(true, monday.hasSchedule(schedule));
+	mockScheduler.addSchedule(schedule);
+	EXPECT_EQ(true, mockScheduler.hasSchedule(schedule));
 }
 
 int main() {
