@@ -113,7 +113,9 @@ TEST_F(BookingSchedulerTest, 이메일이있는경우에는이메일발송) {
 
 TEST_F(BookingSchedulerTest, 현재날짜가일요일인경우예약불가예외처리) {
 	setUp();
-	SundayBooking sunday{ CAPACITY_PER_HOUR };
+
+	tm sundayDate = getTime(2025, 7, 20, 13, 0);
+	TestBookingScheduler sunday{ CAPACITY_PER_HOUR, sundayDate };
 
 	try {
 		schedule = new Schedule{ ON_THE_HOUR , UNDER_CAPACITY, CUSTOMER };
@@ -127,7 +129,9 @@ TEST_F(BookingSchedulerTest, 현재날짜가일요일인경우예약불가예외처리) {
 
 TEST_F(BookingSchedulerTest, 현재날짜가일요일이아닌경우예약가능) {
 	setUp();
-	MondayBooking monday{ CAPACITY_PER_HOUR };
+
+	tm mondayDate = getTime(2025, 7, 21, 13, 0);
+	TestBookingScheduler monday{ CAPACITY_PER_HOUR, mondayDate };
 
 	Schedule* schedule = new Schedule{ ON_THE_HOUR , CAPACITY_PER_HOUR, CUSTOMER };
 
