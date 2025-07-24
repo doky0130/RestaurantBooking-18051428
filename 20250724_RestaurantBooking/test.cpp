@@ -4,10 +4,15 @@
 #include "test_mail_sender.cpp"
 #include "test_day_of_week_booking_scheduler.cpp"
 
+class MockCustomer : public Customer {
+public:
+	MOCK_METHOD(string, getEmail, (), (override));
+};
+
 class BookingSchedulerTest : public testing::Test {
 public:
-	Customer CUSTOMER{ "name","010-1234-5678" };
-	Customer CUSTOMER_WITH_MAIL{ "name","010-1234-5678", "mail@mail.com" };
+	MockCustomer CUSTOMER;
+	MockCustomer CUSTOMER_WITH_MAIL;
 	tm NOT_ON_THE_HOUR;
 	tm ON_THE_HOUR;
 	const int UNDER_CAPACITY = 1;
@@ -18,6 +23,11 @@ public:
 	TestMailSender mailSender;
 
 	void setUp() {
+		EXPECT_CALL(CUSTOMER, getEmail)
+			.WillRepeatedly(testing::Return(""));
+		EXPECT_CALL(CUSTOMER_WITH_MAIL, getEmail)
+			.WillRepeatedly(testing::Return("mail@mail.com"));
+
 		NOT_ON_THE_HOUR = getTime(2025, 7, 24, 12, 56);
 		ON_THE_HOUR = getTime(2025, 7, 24, 13, 0);
 
