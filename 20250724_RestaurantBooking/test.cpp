@@ -19,7 +19,9 @@ public:
 	void setUp() {
 		NOT_ON_THE_HOUR = getTime(2025, 7, 24, 12, 56);
 		ON_THE_HOUR = getTime(2025, 7, 24, 13, 0);
+
 		bookingScheduler.setSmsSender(&smsSender);
+		bookingScheduler.setMailSender(&mailSender);
 	}
 
 	tm getTime(int year, int month, int day, int hour, int min) {
@@ -95,8 +97,6 @@ TEST_F(BookingSchedulerTest, 이메일이없는경우에는이메일미발송) {
 
 	Schedule* schedule = new Schedule{ ON_THE_HOUR , UNDER_CAPACITY, CUSTOMER };
 
-	bookingScheduler.setMailSender(&mailSender);
-
 	bookingScheduler.addSchedule(schedule);
 	EXPECT_EQ(false, mailSender.getSendMethodIsCalled());
 }
@@ -105,8 +105,6 @@ TEST_F(BookingSchedulerTest, 이메일이있는경우에는이메일발송) {
 	setUp();
 
 	Schedule* schedule = new Schedule{ ON_THE_HOUR , UNDER_CAPACITY, CUSTOMER_WITH_MAIL };
-
-	bookingScheduler.setMailSender(&mailSender);
 
 	bookingScheduler.addSchedule(schedule);
 	EXPECT_EQ(true, mailSender.getSendMethodIsCalled());
