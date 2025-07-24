@@ -2,6 +2,7 @@
 #include "booking_scheduler.cpp"
 #include "test_sms_sender.cpp"
 #include "test_mail_sender.cpp"
+#include "test_day_of_week_booking_scheduler.cpp"
 
 class BookingSchedulerTest : public testing::Test {
 public:
@@ -111,11 +112,27 @@ TEST_F(BookingSchedulerTest, 이메일이있는경우에는이메일발송) {
 }
 
 TEST_F(BookingSchedulerTest, 현재날짜가일요일인경우예약불가예외처리) {
+	setUp();
+	SundayBooking sunday{ CAPACITY_PER_HOUR };
 
+	try {
+		schedule = new Schedule{ ON_THE_HOUR , UNDER_CAPACITY, CUSTOMER };
+		sunday.addSchedule(schedule);
+		FAIL();
+	}
+	catch (std::exception& e) {
+		EXPECT_EQ(string{ e.what() }, "Booking system is not available on sunday");
+	}
 }
 
 TEST_F(BookingSchedulerTest, 현재날짜가일요일이아닌경우예약가능) {
+	setUp();
+	MondayBooking monday{ CAPACITY_PER_HOUR };
 
+	Schedule* schedule = new Schedule{ ON_THE_HOUR , CAPACITY_PER_HOUR, CUSTOMER };
+
+	monday.addSchedule(schedule);
+	EXPECT_EQ(true, monday.hasSchedule(schedule));
 }
 
 int main() {

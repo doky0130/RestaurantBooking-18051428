@@ -42,6 +42,9 @@
     <ClCompile Include="test_mail_sender.cpp">
       <Filter>테스트 파일</Filter>
     </ClCompile>
+    <ClCompile Include="test_day_of_week_booking_scheduler.cpp">
+      <Filter>테스트 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

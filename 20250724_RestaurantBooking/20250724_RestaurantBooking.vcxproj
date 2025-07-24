@@ -149,6 +149,7 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'"> %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="test.cpp" />
+    <ClCompile Include="test_day_of_week_booking_scheduler.cpp" />
     <ClCompile Include="test_mail_sender.cpp" />
     <ClCompile Include="test_sms_sender.cpp">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"> %(AdditionalOptions)</AdditionalOptions>
