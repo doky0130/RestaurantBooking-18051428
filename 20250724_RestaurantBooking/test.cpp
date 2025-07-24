@@ -1,15 +1,25 @@
 #include "gmock/gmock.h"
 #include "booking_scheduler.cpp"
-#include "test_sms_sender.cpp"
-#include "test_mail_sender.cpp"
 #include "test_day_of_week_booking_scheduler.cpp"
+
+using namespace testing;
 
 class MockCustomer : public Customer {
 public:
 	MOCK_METHOD(string, getEmail, (), (override));
 };
 
-class BookingSchedulerTest : public testing::Test {
+class MockSmsSender : public SmsSender {
+public:
+	MOCK_METHOD(void, send, (Schedule*), (override));
+};
+
+class MockMailSender : public MailSender {
+public:
+	MOCK_METHOD(void, sendMail, (Schedule*), (override));
+};
+
+class BookingSchedulerTest : public Test {
 public:
 	MockCustomer CUSTOMER;
 	MockCustomer CUSTOMER_WITH_MAIL;
@@ -19,8 +29,8 @@ public:
 	const int CAPACITY_PER_HOUR = 3;
 	Schedule* schedule;
 	BookingScheduler bookingScheduler{ CAPACITY_PER_HOUR };
-	TestSmsSender smsSender;
-	TestMailSender mailSender;
+	NiceMock<MockSmsSender> smsSender;
+	NiceMock <MockMailSender> mailSender;
 
 	void setUp() {
 		EXPECT_CALL(CUSTOMER, getEmail)
@@ -49,6 +59,7 @@ public:
 };
 TEST_F(BookingSchedulerTest, 예약은정시에만가능하다정시가아닌경우예약불가) {
 	setUp();
+	EXPECT_CALL(smsSender, send).Times(0);
 
 	Schedule* schedule = new Schedule{ NOT_ON_THE_HOUR , UNDER_CAPACITY, CUSTOMER };
 
@@ -83,6 +94,7 @@ TEST_F(BookingSchedulerTest, 시간대별인원제한이있다같은시간대에Capacity초과할경�
 
 TEST_F(BookingSchedulerTest, 시간대별인원제한이있다같은시간대가다르면Capacity차있어도스케쥴추가성공) {
 	setUp();
+	EXPECT_CALL(smsSender, send).Times(2);
 
 	Schedule* schedule = new Schedule{ ON_THE_HOUR , CAPACITY_PER_HOUR, CUSTOMER };
 	bookingScheduler.addSchedule(schedule);
@@ -96,29 +108,29 @@ TEST_F(BookingSchedulerTest, 시간대별인원제한이있다같은시간대가다르면Capacity차�
 
 TEST_F(BookingSchedulerTest, 예약완료시SMS는무조건발송) {
 	setUp();
+	EXPECT_CALL(smsSender, send).Times(1);
 
 	Schedule* schedule = new Schedule{ ON_THE_HOUR , UNDER_CAPACITY, CUSTOMER };
 
 	bookingScheduler.addSchedule(schedule);
-	EXPECT_EQ(true, smsSender.getSendMethodIsCalled());
 }
 
 TEST_F(BookingSchedulerTest, 이메일이없는경우에는이메일미발송) {
 	setUp();
+	EXPECT_CALL(mailSender, sendMail).Times(0);
 
 	Schedule* schedule = new Schedule{ ON_THE_HOUR , UNDER_CAPACITY, CUSTOMER };
 
 	bookingScheduler.addSchedule(schedule);
-	EXPECT_EQ(false, mailSender.getSendMethodIsCalled());
 }
 
 TEST_F(BookingSchedulerTest, 이메일이있는경우에는이메일발송) {
 	setUp();
+	EXPECT_CALL(mailSender, sendMail).Times(1);
 
 	Schedule* schedule = new Schedule{ ON_THE_HOUR , UNDER_CAPACITY, CUSTOMER_WITH_MAIL };
 
 	bookingScheduler.addSchedule(schedule);
-	EXPECT_EQ(true, mailSender.getSendMethodIsCalled());
 }
 
 TEST_F(BookingSchedulerTest, 현재날짜가일요일인경우예약불가예외처리) {
