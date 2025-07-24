@@ -6,7 +6,7 @@ public:
 	Customer customer{ "name","010-1234-5678" };
 	tm NOT_ON_THE_HOUR;
 	tm ON_THE_HOUR;
-	const int NUM_OF_PEOPLE = 1;
+	const int UNDER_CAPACITY = 1;
 	const int CAPACITY_PER_HOUR = 3;
 	Schedule* schedule;
 	BookingScheduler bookingScheduler{ CAPACITY_PER_HOUR };
@@ -25,7 +25,7 @@ public:
 TEST_F(BookingSchedulerTest, 예약은정시에만가능하다정시가아닌경우예약불가) {
 	setUp();
 
-	Schedule* schedule = new Schedule{ NOT_ON_THE_HOUR , NUM_OF_PEOPLE, customer };
+	Schedule* schedule = new Schedule{ NOT_ON_THE_HOUR , UNDER_CAPACITY, customer };
 
 	EXPECT_THROW(bookingScheduler.addSchedule(schedule),
 		std::runtime_error);
@@ -34,18 +34,40 @@ TEST_F(BookingSchedulerTest, 예약은정시에만가능하다정시가아닌경우예약불가) {
 TEST_F(BookingSchedulerTest, 예약은정시에만가능하다정시인경우예약가능) {
 	setUp();
 
-	Schedule* schedule = new Schedule{ ON_THE_HOUR , NUM_OF_PEOPLE, customer };
+	Schedule* schedule = new Schedule{ ON_THE_HOUR , CAPACITY_PER_HOUR, customer };
 
 	bookingScheduler.addSchedule(schedule);
 	EXPECT_EQ(true, bookingScheduler.hasSchedule(schedule));
 }
 
 TEST_F(BookingSchedulerTest, 시간대별인원제한이있다같은시간대에Capacity초과할경우예외발생) {
+	setUp();
 
+	Schedule* schedule = new Schedule{ ON_THE_HOUR , CAPACITY_PER_HOUR, customer };
+	bookingScheduler.addSchedule(schedule);
+
+	try {
+		schedule = new Schedule{ ON_THE_HOUR , UNDER_CAPACITY, customer };
+		bookingScheduler.addSchedule(schedule);
+		FAIL();
+	}
+	catch (std::exception& e) {
+		EXPECT_EQ(string{ e.what() }, "Number of people is over restaurant capacity per hour");
+	}
 }
 
 TEST_F(BookingSchedulerTest, 시간대별인원제한이있다같은시간대가다르면Capacity차있어도스케쥴추가성공) {
+	setUp();
 
+	Schedule* schedule = new Schedule{ ON_THE_HOUR , CAPACITY_PER_HOUR, customer };
+	bookingScheduler.addSchedule(schedule);
+
+	tm differentHour = ON_THE_HOUR;
+	differentHour.tm_hour += 1;
+	schedule = new Schedule{ differentHour , CAPACITY_PER_HOUR, customer };
+
+	bookingScheduler.addSchedule(schedule);
+	EXPECT_EQ(true, bookingScheduler.hasSchedule(schedule));
 }
 
 TEST_F(BookingSchedulerTest, 예약완료시SMS는무조건발송) {
