@@ -11,10 +11,12 @@ public:
 	const int CAPACITY_PER_HOUR = 3;
 	Schedule* schedule;
 	BookingScheduler bookingScheduler{ CAPACITY_PER_HOUR };
+	TestSmsSender smsSender;
 
 	void setUp() {
 		NOT_ON_THE_HOUR = getTime(2025, 7, 24, 12, 56);
 		ON_THE_HOUR = getTime(2025, 7, 24, 13, 0);
+		bookingScheduler.setSmsSender(&smsSender);
 	}
 
 	tm getTime(int year, int month, int day, int hour, int min) {
@@ -80,8 +82,6 @@ TEST_F(BookingSchedulerTest, 예약완료시SMS는무조건발송) {
 	setUp();
 
 	Schedule* schedule = new Schedule{ ON_THE_HOUR , UNDER_CAPACITY, customer };
-	TestSmsSender smsSender;
-	bookingScheduler.setSmsSender(&smsSender);
 
 	bookingScheduler.addSchedule(schedule);
 	EXPECT_EQ(true, smsSender.getSendMethodIsCalled());
