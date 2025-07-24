@@ -21,6 +21,12 @@ public:
 		mktime(&result);
 		return result;
 	}
+
+	tm plusHour(tm orgHour) {
+		tm resultHour = orgHour;
+		resultHour.tm_hour += 1;
+		return resultHour;
+	}
 };
 TEST_F(BookingSchedulerTest, 예약은정시에만가능하다정시가아닌경우예약불가) {
 	setUp();
@@ -62,8 +68,7 @@ TEST_F(BookingSchedulerTest, 시간대별인원제한이있다같은시간대가다르면Capacity차�
 	Schedule* schedule = new Schedule{ ON_THE_HOUR , CAPACITY_PER_HOUR, customer };
 	bookingScheduler.addSchedule(schedule);
 
-	tm differentHour = ON_THE_HOUR;
-	differentHour.tm_hour += 1;
+	tm differentHour = plusHour(ON_THE_HOUR);
 	schedule = new Schedule{ differentHour , CAPACITY_PER_HOUR, customer };
 
 	bookingScheduler.addSchedule(schedule);
